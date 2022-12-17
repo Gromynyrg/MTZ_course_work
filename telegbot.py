@@ -2,7 +2,7 @@ import MTZ_V
 from aiogram import Bot, Dispatcher, executor, types
 
 
-API_TOKEN = '5807405189:AAF2R27fx9qqsjnWVrNOHio1BpJvcH0WCMY'
+API_TOKEN = 'TOKEN'
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
