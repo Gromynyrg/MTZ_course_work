@@ -13,14 +13,14 @@ class UserStates(StatesGroup):
     common = State()    # Обычное состояние
 
 
-API_TOKEN = 'TOKEN'
+API_TOKEN = '5807405189:AAF2R27fx9qqsjnWVrNOHio1BpJvcH0WCMY'
 bot = Bot(token=API_TOKEN)  # Подключаем бота к его токену
 dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(LoggingMiddleware())
 
 i = 0
 k = 0
-mas= []
+mas = []
 x_size = 0
 y_size = 0
 
@@ -33,8 +33,7 @@ kb = [
 ]  # Задаём кнопки для бота
 keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True)
 
-
-@dp.message_handler(commands=['start'])  # Явно указываем в декораторе, на какую команду реагируем.
+@dp.message_handler(commands=['start'], state='*')  # Явно указываем в декораторе, на какую команду реагируем.
 async def send_welcome(message: types.Message):
     user_name = message.from_user.username
     await message.reply(
@@ -81,9 +80,17 @@ async def send_reply(message: types.Message):
 
 @dp.message_handler(state=UserStates.init)
 async def get_size(message: types.Message):
-    sizes = [int(x) for x in message.text.split()]
-
-    if (len(sizes) == 3):
+    sizes = []
+    def isint():
+        try:
+            sizes = [int(x) for x in message.text.split()]
+            return True
+        except ValueError:
+            return False
+    b = isint()
+    if b:
+        sizes = [int(x) for x in message.text.split()]
+    if ((len(sizes) == 3)and b):
         await message.answer("Хорошо, Теперь укажите число прямоугольников - одно целое число")
         data_creation.init_file(id_user=message.from_user.id, column=sizes[0], row=sizes[1], field_density=sizes[2])
         global mas,x_size,y_size
@@ -105,13 +112,23 @@ async def get_size(message: types.Message):
 
 @dp.message_handler(state=UserStates.sizes)
 async def get_count_rec(message: types.Message):
-    rect_count = int(message.text)
-    await message.answer(
-        "Хорошо, Теперь укажите начальные координаты для прямоугольников и их размеры и плотность - 5 чисел через пробел")
-    await UserStates.rectangles.set()
-    global i
-    i = 0
-    i = rect_count
+    def isint2():
+        try:
+            rect_count = int(message.text)
+            return True
+        except ValueError:
+            return False
+    b = isint2()
+    if b:
+        rect_count = int(message.text)
+        await message.answer(
+            "Хорошо, Теперь укажите начальные координаты для прямоугольников и их размеры и плотность - 5 чисел через пробел")
+        await UserStates.rectangles.set()
+        global i
+        i = 0
+        i = rect_count
+    else:
+        await message.answer("Что-то пошло не так, введите данные в правильном виде")
 
 
 @dp.message_handler(state=UserStates.rectangles)
@@ -135,7 +152,8 @@ async def get_rect(message: types.Message):
             for _ in range(rect[0] - 1, rect[2] + rect[0] - 1):
                 for __ in range(rect[1] - 1, rect[3] + rect[1] - 1):
                     mas[_][__] = rect[4]
-        await message.answer("Всё готово")
+        await message.answer("Всё готово, ожидайте результатов")
+        await message.answer_chat_action(action=types.ChatActions.TYPING)
         data_creation.fill_in(id_user=message.from_user.id, mas=mas, x_size=x_size, y_size=y_size)
         k = 0
         file_name = f'{message.from_user.id}.txt'
